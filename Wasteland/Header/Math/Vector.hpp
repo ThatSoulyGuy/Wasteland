@@ -595,7 +595,7 @@ namespace std
 	};
 
 	template <Wasteland::Math::Arithmetic T, size_t N>
-	struct std::formatter<Wasteland::Math::Vector<T, N>> : std::formatter<T>
+	struct formatter<Wasteland::Math::Vector<T, N>> : formatter<T>
 	{
 		template <typename FormatContext>
 		auto format(const Wasteland::Math::Vector<T, N>& input, FormatContext& context)

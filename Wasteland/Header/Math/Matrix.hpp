@@ -4,11 +4,11 @@
 
 namespace Wasteland::Math
 {
-	template <typename T, template <typename> typename Container>
-	concept DoubleArrayType = requires(Container<T> a)
+	template <typename Container>
+	concept DoubleArrayType = requires(Container a)
 	{
-		typename Container<T>::value_type;
-		requires ArrayType<typename Container<T>::value_type>;
+		typename Container::value_type;
+		requires ArrayType<typename Container::value_type>;
 
 		{ a.begin() } -> std::input_or_output_iterator;
 		{ a.end() } -> std::input_or_output_iterator;
@@ -40,7 +40,7 @@ namespace Wasteland::Math
 			}
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix(const U& input)
 		{
 			assert(std::distance(input.begin(), input.end()) == R);
@@ -56,7 +56,7 @@ namespace Wasteland::Math
 			}
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix& operator=(const U& operand)
 		{
 			assert(std::distance(operand.begin(), operand.end()) == R);
@@ -91,7 +91,7 @@ namespace Wasteland::Math
 			return *this;
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix operator+(const U& operand) const
 		{
 			return ApplyOperation(operand, std::plus<T>());
@@ -107,7 +107,7 @@ namespace Wasteland::Math
 			return ApplyOperation(operand, std::plus<T>());
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix operator-(const U& operand) const
 		{
 			return ApplyOperation(operand, std::minus<T>());
@@ -148,7 +148,7 @@ namespace Wasteland::Math
 			return (*this) * temp;
 		}
 
-		template <DoubleArrayType<T> U, size_t K>
+		template <DoubleArrayType U, size_t K>
 		Matrix<T, R, K> operator*(const U& operand) const
 		{
 			Matrix<T, C, K> temp(operand);
@@ -168,7 +168,7 @@ namespace Wasteland::Math
 			return result;
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix operator/(const U& operand) const
 		{
 			return ApplyOperation(operand, std::divides<T>());
@@ -184,7 +184,7 @@ namespace Wasteland::Math
 			return ApplyOperation(operand, std::divides<T>());
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix& operator+=(const U& operand)
 		{
 			return ApplyOperationInPlace(operand, std::plus<T>());
@@ -200,7 +200,7 @@ namespace Wasteland::Math
 			return ApplyOperationInPlace(operand, std::plus<T>());
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix& operator-=(const U& operand)
 		{
 			return ApplyOperationInPlace(operand, std::minus<T>());
@@ -222,7 +222,7 @@ namespace Wasteland::Math
 			return *this;
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix& operator*=(const U& operand) requires (R == C)
 		{
 			*this = *this * operand;
@@ -235,7 +235,7 @@ namespace Wasteland::Math
 			return *this;
 		}
 
-		template <DoubleArrayType<T> U>
+		template <DoubleArrayType U>
 		Matrix& operator/=(const U& operand)
 		{
 			return ApplyOperationInPlace(operand, std::divides<T>());

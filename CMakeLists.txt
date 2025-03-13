@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.12)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (POLICY CMP0141)
@@ -31,9 +31,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glfw)
 
 if(LINUX)
-    target_link_libraries(Wasteland PRIVATE glfw gl)
+  find_package(OpenGL REQUIRED)
+  target_link_libraries(Wasteland PRIVATE glfw OpenGL::GL)
+  add_definitions(-D_GLFW_X11)
 elseif(WIN32)
-    target_link_libraries(Wasteland PRIVATE glfw opengl32)
+  target_link_libraries(Wasteland PRIVATE glfw opengl32)
 endif()
 
 FetchContent_Declare(

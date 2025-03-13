@@ -15,7 +15,7 @@
 #undef WriteConsole
 #undef ReadConsole
 #undef ERROR
-#elif defined __LINUX__
+#else
 #include <execinfo.h>
 #endif
 
@@ -80,6 +80,7 @@ namespace Wasteland::Utility::Exception
         static std::string GetStackTraceMessage() 
         {
 #if defined __linux__
+            int maxFrames = 64;
             std::vector<void*> array(maxFrames);
             size_t size = backtrace(array.data(), maxFrames);
             char** symbols = backtrace_symbols(array.data(), size);
