@@ -24,7 +24,7 @@ namespace Wasteland
 
 		void PreInitialize()
 		{
-			Window::GetInstance().Initialize("Wasteland* 1.11.8", { 750, 450 });
+			Window::GetInstance().Initialize("Wasteland* 1.11.9", { 750, 450 });
 
 			InputManager::GetInstance().Initialize();
 

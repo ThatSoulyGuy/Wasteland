@@ -78,7 +78,7 @@ if(APPLE)
 
   target_link_libraries(Wasteland PRIVATE
   glfw
-  gl
+  GL
   "-framework Cocoa"
   "-framework QuartzCore"
   "-framework OpenGL"
@@ -94,7 +94,7 @@ if(APPLE)
     -Wall
     -Wextra
     -Wno-deprecated-declarations
-    -mmacosx-version-min=10.13
+    -mmacosx-version-min=13.7.4
   )
 
   include_directories(
