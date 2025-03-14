@@ -64,6 +64,20 @@ FetchContent_MakeAvailable(Cereal)
 
 target_link_libraries(Wasteland PRIVATE cereal)
 
+set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
+set(BUILD_BULLET3_DEMOS OFF CACHE BOOL "" FORCE)
+set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+set(BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    Bullet
+    GIT_REPOSITORY https://github.com/bulletphysics/bullet3.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(Bullet)
+
+target_link_libraries(Wasteland PRIVATE BulletDynamics BulletCollision LinearMath)
+
 set(SOURCE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
 set(BUILD_ASSETS_DIR "${CMAKE_CURRENT_BINARY_DIR}/Assets")
 
