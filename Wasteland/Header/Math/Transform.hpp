@@ -116,9 +116,6 @@ namespace Wasteland::Math
             if (std::fabs(s.z()) > 1e-6f)
                 M[2][0] /= s.z();  M[2][1] /= s.z();  M[2][2] /= s.z();
             
-            M[0][3] = 0.0f;
-            M[1][3] = 0.0f;
-            M[2][3] = 0.0f;
 
             Vector<float, 3> euler{ 0, 0, 0 };
 
