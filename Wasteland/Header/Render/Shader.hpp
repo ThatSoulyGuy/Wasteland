@@ -83,15 +83,7 @@ namespace Wasteland::Render
 
 		void SetUniform(const std::string& name, const Matrix<float, 4, 4>& value)
 		{
-			GLfloat matData[16] = { };
-
-			for (size_t row = 0; row < 4; ++row)
-			{
-				for (size_t col = 0; col < 4; ++col)
-					matData[row * 4 + col] = value[row][col];
-			}
-
-			glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_TRUE, matData);
+			glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, &value[0][0]);
 		}
 
 		void Uninitialize()

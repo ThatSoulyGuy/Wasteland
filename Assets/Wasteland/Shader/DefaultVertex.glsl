@@ -15,7 +15,7 @@ out vec2 uvs;
 
 void main()
 {
-	gl_Position = vec4(positionIn, 1.0)  * model * view * projection;
+	gl_Position = projection * view * model * vec4(positionIn, 1.0);
 
 	color = colorIn;
 	normal = normalIn;

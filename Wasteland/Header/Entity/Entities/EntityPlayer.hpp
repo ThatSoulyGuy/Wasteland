@@ -66,10 +66,15 @@ namespace Wasteland::Entity::Entities
 		void UpdateMouselook()
 		{
 			Vector<float, 2> mouseDelta = InputManager::GetInstance().GetMouseDelta();
-
 			float sensitivity = 0.03f;
 
-			camera->GetGameObject()->GetTransform()->Rotate({ -mouseDelta.y() * sensitivity, -mouseDelta.x() * sensitivity, 0.0f });
+			auto transform = camera->GetGameObject()->GetTransform();
+			Vector<float, 3> rotation = transform->GetLocalRotation();
+
+			rotation.y() -= mouseDelta.x() * sensitivity;
+			rotation.x() += mouseDelta.y() * sensitivity;
+
+			transform->SetLocalRotation(rotation);
 		}
 
 		void UpdateMovement()
@@ -86,10 +91,10 @@ namespace Wasteland::Entity::Entities
 				movement -= forward * MovementSpeed;
 
 			if (InputManager::GetInstance().GetKeyState(KeyCode::A, KeyState::HELD))
-				movement -= right * MovementSpeed;
+				movement += right * MovementSpeed;
 
 			if (InputManager::GetInstance().GetKeyState(KeyCode::D, KeyState::HELD))
-				movement += right * MovementSpeed;
+				movement -= right * MovementSpeed;
 
 			GetGameObject()->GetTransform()->Translate(movement);
 		}

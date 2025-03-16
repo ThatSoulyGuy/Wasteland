@@ -562,7 +562,7 @@ namespace Wasteland::Math
 	template <Arithmetic T, size_t N>
 	std::ostream& operator<<(std::ostream& os, const Vector<T, N>& vec)
 	{
-		os << "{ ";
+		os << "[ ";
 
 		for (size_t i = 0; i < N; ++i)
 		{
@@ -572,7 +572,7 @@ namespace Wasteland::Math
 				os << ", ";
 		}
 
-		os << " }";
+		os << " ]";
 
 		return os;
 	}

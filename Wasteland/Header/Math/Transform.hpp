@@ -21,9 +21,9 @@ namespace Wasteland::Math
             localPosition += translation;
         }
 
-        void Rotate(const Vector<float, 3>& rotation)
+        void Rotate(const Vector<float, 3>& rotationDeg)
         {
-            localRotation += rotation;
+            localRotation += rotationDeg;
 
             for (int i = 0; i < 3; ++i)
             {
@@ -46,7 +46,7 @@ namespace Wasteland::Math
 
         void SetLocalPosition(const Vector<float, 3>& value)
         {
-            this->localPosition = value;
+            localPosition = value;
         }
 
         Vector<float, 3> GetLocalRotation() const
@@ -56,7 +56,7 @@ namespace Wasteland::Math
 
         void SetLocalRotation(const Vector<float, 3>& value)
         {
-            this->localRotation = value;
+            localRotation = value;
 
             for (int i = 0; i < 3; ++i)
             {
@@ -74,24 +74,24 @@ namespace Wasteland::Math
 
         void SetLocalScale(const Vector<float, 3>& value)
         {
-            this->localScale = value;
+            localScale = value;
         }
 
         Vector<float, 3> GetWorldPosition() const
         {
-            Matrix<float, 4, 4> M = GetModelMatrix();
+            auto M = GetModelMatrix();
 
-            return { M[0][3], M[1][3], M[2][3] };
+            return { M[3][0], M[3][1], M[3][2] };
         }
 
         Vector<float, 3> GetWorldScale() const
         {
-            Matrix<float, 4, 4> M = GetModelMatrix();
+            auto M = GetModelMatrix();
 
-            auto length = [](float a, float b, float c)
-            {
-                return std::sqrt(a * a + b * b + c * c);
-            };
+            auto length = [](float x, float y, float z)
+                {
+                    return std::sqrt(x * x + y * y + z * z);
+                };
 
             return
             {
@@ -101,46 +101,10 @@ namespace Wasteland::Math
             };
         }
 
-        Vector<float, 3> GetWorldRotation() const
-        {
-            Matrix<float, 4, 4> M = GetModelMatrix();
-
-            Vector<float, 3> s = GetWorldScale();
-
-            if (std::fabs(s.x()) > 1e-6f)
-                M[0][0] /= s.x();  M[0][1] /= s.x();  M[0][2] /= s.x();
-            
-            if (std::fabs(s.y()) > 1e-6f)
-                M[1][0] /= s.y();  M[1][1] /= s.y();  M[1][2] /= s.y();
-            
-            if (std::fabs(s.z()) > 1e-6f)
-                M[2][0] /= s.z();  M[2][1] /= s.z();  M[2][2] /= s.z();
-            
-
-            Vector<float, 3> euler{ 0, 0, 0 };
-
-            float sy = -M[2][0];
-            float cx = std::sqrt(M[0][0] * M[0][0] + M[1][0] * M[1][0]);
-
-            if (std::fabs(cx) > 1e-6f)
-            {
-                euler.x() = std::atan2(sy, cx);
-                euler.y() = std::atan2(M[1][0], M[0][0]);
-                euler.z() = std::atan2(M[2][1], M[2][2]);
-            }
-            else
-            {
-                euler.x() = (sy > 0.0f) ? std::numbers::pi_v<float> *0.5f : -std::numbers::pi_v<float> *0.5f;
-                euler.y() = std::atan2(-M[1][2], M[1][1]);
-                euler.z() = 0.0f;
-            }
-
-            return euler * (180.0f / std::numbers::pi);
-        }
-
         Vector<float, 3> GetForward() const
         {
-            Matrix<float, 4, 4> M = GetModelMatrix();
+            auto M = GetModelMatrix();
+
             Vector<float, 3> f = { M[2][0], M[2][1], M[2][2] };
 
             return Vector<float, 3>::Normalize(f);
@@ -148,7 +112,8 @@ namespace Wasteland::Math
 
         Vector<float, 3> GetRight() const
         {
-            Matrix<float, 4, 4> M = GetModelMatrix();
+            auto M = GetModelMatrix();
+
             Vector<float, 3> r = { M[0][0], M[0][1], M[0][2] };
 
             return Vector<float, 3>::Normalize(r);
@@ -156,10 +121,47 @@ namespace Wasteland::Math
 
         Vector<float, 3> GetUp() const
         {
-            Matrix<float, 4, 4> M = GetModelMatrix();
+            auto M = GetModelMatrix();
+
             Vector<float, 3> u = { M[1][0], M[1][1], M[1][2] };
 
             return Vector<float, 3>::Normalize(u);
+        }
+
+        Vector<float, 3> GetWorldRotation() const
+        {
+            auto M = GetModelMatrix();
+
+            Vector<float, 3> sc = GetWorldScale();
+
+            if (std::fabs(sc.x()) > 1e-6f)
+                M[0][0] /= sc.x(); M[0][1] /= sc.x(); M[0][2] /= sc.x();
+
+            if (std::fabs(sc.y()) > 1e-6f)
+                M[1][0] /= sc.y(); M[1][1] /= sc.y(); M[1][2] /= sc.y();
+
+            if (std::fabs(sc.z()) > 1e-6f)
+                M[2][0] /= sc.z(); M[2][1] /= sc.z(); M[2][2] /= sc.z();
+
+
+            float pitch, yaw, roll;
+
+            if (std::fabs(M[0][0]) < 1e-6f && std::fabs(M[1][0]) < 1e-6f)
+            {
+                pitch = std::atan2(-M[2][0], M[2][2]);
+                yaw = 0.0f;
+                roll = std::atan2(-M[1][2], M[1][1]);
+            }
+            else
+            {
+                yaw = std::atan2(M[1][0], M[0][0]);
+                pitch = std::atan2(-M[2][0], std::sqrt(M[2][1] * M[2][1] + M[2][2] * M[2][2]));
+                roll = std::atan2(M[2][1], M[2][2]);
+            }
+
+            const float rad2deg = 180.0f / std::numbers::pi_v<float>;
+
+            return Vector<float, 3>{ pitch* rad2deg, yaw* rad2deg, roll* rad2deg };
         }
 
         std::optional<std::weak_ptr<Transform>> GetParent() const
@@ -177,22 +179,20 @@ namespace Wasteland::Math
 
         Matrix<float, 4, 4> GetModelMatrix() const
         {
-            Matrix<float, 4, 4> translation = Matrix<float, 4, 4>::Translation(localPosition);
+            auto T = Matrix<float, 4, 4>::Translation(localPosition);
+            auto RX = Matrix<float, 4, 4>::RotationX(localRotation.x() * (std::numbers::pi_v<float> / 180.0f));
+            auto RY = Matrix<float, 4, 4>::RotationY(localRotation.y() * (std::numbers::pi_v<float> / 180.0f));
+            auto RZ = Matrix<float, 4, 4>::RotationZ(localRotation.z() * (std::numbers::pi_v<float> / 180.0f));
+            auto S = Matrix<float, 4, 4>::Scale(localScale);
 
-            Matrix<float, 4, 4> rotationX = Matrix<float, 4, 4>::RotationX(localRotation.x() * (std::numbers::pi / 180.0f));
-            Matrix<float, 4, 4> rotationY = Matrix<float, 4, 4>::RotationY(localRotation.y() * (std::numbers::pi / 180.0f));
-            Matrix<float, 4, 4> rotationZ = Matrix<float, 4, 4>::RotationZ(localRotation.z() * (std::numbers::pi / 180.0f));
-
-            Matrix<float, 4, 4> scale = Matrix<float, 4, 4>::Scale(localScale);
-
-            Matrix<float, 4, 4> localMatrix = translation * (rotationX * rotationY * rotationZ) * scale;
+            Matrix<float, 4, 4> localMatrix = T * RZ * RY * RX * S;
 
             if (parent.has_value())
             {
-                auto parentPointer = parent.value().lock();
+                auto parentPtr = parent.value().lock();
 
-                if (parentPointer)
-                    return parentPointer->GetModelMatrix() * localMatrix;
+                if (parentPtr)
+                    return parentPtr->GetModelMatrix() * localMatrix;
             }
 
             return localMatrix;
@@ -219,4 +219,5 @@ namespace Wasteland::Math
         Vector<float, 3> localRotation = { 0.0f, 0.0f, 0.0f };
         Vector<float, 3> localScale = { 1.0f, 1.0f, 1.0f };
     };
+
 }

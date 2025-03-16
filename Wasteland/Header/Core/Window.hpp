@@ -46,6 +46,8 @@ namespace Wasteland::Core
 				throw MAKE_EXCEPTION(IllegalStateException, "Failed to initialize GLAD!");
 
 			glfwShowWindow(handle);
+
+			glEnable(GL_DEPTH_TEST);
 		}
 
 		bool IsRunning() const

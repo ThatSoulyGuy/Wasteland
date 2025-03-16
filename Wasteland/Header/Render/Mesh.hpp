@@ -82,6 +82,16 @@ namespace Wasteland::Render
 				throw MAKE_EXCEPTION(GraphicalErrorException, std::string("OpenGL Error: '") + std::to_string(error) + "'!");
 		}
 
+		void SetVertices(const std::vector<Vertex>& vertices)
+		{
+			this->vertices = vertices;
+		}
+
+		void SetIndices(const std::vector<unsigned int>& indices)
+		{
+			this->indices = indices;
+		}
+
 		static std::shared_ptr<Mesh> Create(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices)
 		{
 			std::shared_ptr<Mesh> result(new Mesh());

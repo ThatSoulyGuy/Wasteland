@@ -24,245 +24,323 @@ namespace Wasteland::Math
 
 		Matrix() = default;
 
-		Matrix(std::initializer_list<std::initializer_list<T>> input)
+		Matrix(std::initializer_list<std::initializer_list<T>> init)
 		{
-			assert(input.size() == R);
+			assert(init.size() == C && "Outer list must have C columns");
+			size_t col = 0;
 
-			size_t row = 0;
-
-			for (const auto& r : input)
+			for (const auto& columnList : init)
 			{
-				assert(r.size() == C);
+				assert(columnList.size() == R && "Each column must have R elements (rows)");
+				size_t row = 0;
 
-				std::copy(r.begin(), r.end(), data[row].begin());
+				for (T val : columnList)
+				{
+					data[col][row] = val;
+					++row;
+				}
 
-				++row;
+				++col;
 			}
 		}
 
-		template <DoubleArrayType U>
+		template <ArrayType U>
 		Matrix(const U& input)
 		{
-			assert(std::distance(input.begin(), input.end()) == R);
-			size_t row = 0;
+			assert(std::distance(input.begin(), input.end()) == C);
+			size_t col = 0;
 
-			for (const auto& r : input)
+			for (const auto& colData : input)
 			{
-				assert(std::distance(r.begin(), r.end()) == C);
+				assert(std::distance(colData.begin(), colData.end()) == R);
+				size_t row = 0;
 
-				std::copy(r.begin(), r.end(), data[row].begin());
-
-				++row;
-			}
-		}
-
-		template <DoubleArrayType U>
-		Matrix& operator=(const U& operand)
-		{
-			assert(std::distance(operand.begin(), operand.end()) == R);
-
-			size_t row = 0;
-
-			for (const auto& r : operand)
-			{
-				assert(std::distance(r.begin(), r.end()) == C);
-				std::copy(r.begin(), r.end(), data[row].begin());
-
-				++row;
-			}
-
-			return *this;
-		}
-
-		Matrix& operator=(std::initializer_list<std::initializer_list<T>> operand)
-		{
-			assert(operand.size() == R);
-
-			size_t row = 0;
-
-			for (const auto& r : operand)
-			{
-				assert(r.size() == C);
-				std::copy(r.begin(), r.end(), data[row].begin());
-
-				++row;
-			}
-
-			return *this;
-		}
-
-		template <DoubleArrayType U>
-		Matrix operator+(const U& operand) const
-		{
-			return ApplyOperation(operand, std::plus<T>());
-		}
-
-		Matrix operator+(std::initializer_list<std::initializer_list<T>> operand) const
-		{
-			return ApplyOperation(operand, std::plus<T>());
-		}
-
-		Matrix operator+(const Matrix& operand) const
-		{
-			return ApplyOperation(operand, std::plus<T>());
-		}
-
-		template <DoubleArrayType U>
-		Matrix operator-(const U& operand) const
-		{
-			return ApplyOperation(operand, std::minus<T>());
-		}
-		Matrix operator-(std::initializer_list<std::initializer_list<T>> operand) const
-		{
-			return ApplyOperation(operand, std::minus<T>());
-		}
-		Matrix operator-(const Matrix& operand) const
-		{
-			return ApplyOperation(operand, std::minus<T>());
-		}
-
-		template <size_t K>
-		Matrix<T, R, K> operator*(const Matrix<T, C, K>& operand) const
-		{
-			Matrix<T, R, K> result;
-			for (size_t i = 0; i < R; i++)
-			{
-				for (size_t j = 0; j < K; j++)
+				for (auto val : colData)
 				{
-					T sum = T(0);
-
-					for (size_t k = 0; k < C; k++)
-						sum += data[i][k] * operand[k][j];
-					
-					result[i][j] = sum;
+					data[col][row] = val;
+					++row;
 				}
+
+				++col;
 			}
+		}
+
+		std::array<T, R>& operator[](size_t col)
+		{
+			return data[col];
+		}
+		const std::array<T, R>& operator[](size_t col) const
+		{
+			return data[col];
+		}
+
+		template <ArrayType U>
+		Matrix& operator=(const U& rhs)
+		{
+			assert(std::distance(rhs.begin(), rhs.end()) == C);
+			size_t col = 0;
+
+			for (auto& colData : rhs)
+			{
+				assert(std::distance(colData.begin(), colData.end()) == R);
+				size_t row = 0;
+
+				for (auto val : colData)
+				{
+					data[col][row] = val;
+					++row;
+				}
+
+				++col;
+			}
+
+			return *this;
+		}
+
+		Matrix& operator=(std::initializer_list<std::initializer_list<T>> rhs)
+		{
+			assert(rhs.size() == C);
+
+			size_t col = 0;
+
+			for (const auto& colList : rhs)
+			{
+				assert(colList.size() == R);
+
+				size_t row = 0;
+
+				for (auto val : colList)
+				{
+					data[col][row] = val;
+					++row;
+				}
+
+				++col;
+			}
+
+			return *this;
+		}
+
+		Matrix operator+(const Matrix& rhs) const
+		{
+			Matrix result;
+
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					result[c][r] = data[c][r] + rhs[c][r];
+			}
+
 			return result;
 		}
-
-		template <size_t K>
-		Matrix<T, R, K> operator*(std::initializer_list<std::initializer_list<T>> operand) const
+		Matrix& operator+=(const Matrix& rhs)
 		{
-			Matrix<T, C, K> temp(operand);
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					data[c][r] += rhs[c][r];
+			}
 
-			return (*this) * temp;
+			return *this;
 		}
 
-		template <DoubleArrayType U, size_t K>
-		Matrix<T, R, K> operator*(const U& operand) const
+		Matrix operator-(const Matrix& rhs) const
 		{
-			Matrix<T, C, K> temp(operand);
+			Matrix result;
 
-			return (*this) * temp;
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					result[c][r] = data[c][r] - rhs[c][r];
+			}
+
+			return result;
+		}
+		Matrix& operator-=(const Matrix& rhs)
+		{
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					data[c][r] -= rhs[c][r];
+			}
+
+			return *this;
 		}
 
 		Matrix operator*(T scalar) const
 		{
 			Matrix result;
-			for (size_t i = 0; i < R; i++)
+
+			for (size_t c = 0; c < C; c++)
 			{
-				for (size_t j = 0; j < C; j++)
-					result[i][j] = data[i][j] * scalar;
+				for (size_t r = 0; r < R; r++)
+					result[c][r] = data[c][r] * scalar;
+			}
+
+			return result;
+		}
+		Matrix& operator*=(T scalar)
+		{
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					data[c][r] *= scalar;
+			}
+
+			return *this;
+		}
+
+		template <size_t K>
+		Matrix<T, R, K> operator*(const Matrix<T, C, K>& rhs) const
+		{
+			Matrix<T, R, K> result;
+
+			for (size_t j = 0; j < K; j++)
+			{
+				for (size_t i = 0; i < R; i++)
+				{
+					T sum = T(0);
+					for (size_t k = 0; k < C; k++)
+						sum += data[k][i] * rhs.data[j][k];
+					
+					result.data[j][i] = sum;
+				}
 			}
 
 			return result;
 		}
 
-		template <DoubleArrayType U>
-		Matrix operator/(const U& operand) const
+		Matrix& operator*=(const Matrix& rhs) requires (R == C)
 		{
-			return ApplyOperation(operand, std::divides<T>());
-		}
-
-		Matrix operator/(std::initializer_list<std::initializer_list<T>> operand) const
-		{
-			return ApplyOperation(operand, std::divides<T>());
-		}
-
-		Matrix operator/(const Matrix& operand) const
-		{
-			return ApplyOperation(operand, std::divides<T>());
-		}
-
-		template <DoubleArrayType U>
-		Matrix& operator+=(const U& operand)
-		{
-			return ApplyOperationInPlace(operand, std::plus<T>());
-		}
-
-		Matrix& operator+=(std::initializer_list<std::initializer_list<T>> operand)
-		{
-			return ApplyOperationInPlace(operand, std::plus<T>());
-		}
-
-		Matrix& operator+=(const Matrix& operand)
-		{
-			return ApplyOperationInPlace(operand, std::plus<T>());
-		}
-
-		template <DoubleArrayType U>
-		Matrix& operator-=(const U& operand)
-		{
-			return ApplyOperationInPlace(operand, std::minus<T>());
-		}
-
-		Matrix& operator-=(std::initializer_list<std::initializer_list<T>> operand)
-		{
-			return ApplyOperationInPlace(operand, std::minus<T>());
-		}
-
-		Matrix& operator-=(const Matrix& operand)
-		{
-			return ApplyOperationInPlace(operand, std::minus<T>());
-		}
-
-		Matrix& operator*=(const Matrix& operand) requires (R == C)
-		{
-			*this = *this * operand;
+			*this = (*this) * rhs;
 			return *this;
 		}
 
-		template <DoubleArrayType U>
-		Matrix& operator*=(const U& operand) requires (R == C)
+		static Matrix Identity() requires (R == C)
 		{
-			*this = *this * operand;
-			return *this;
+			Matrix result;
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					result[c][r] = (r == c) ? T(1) : T(0);
+			}
+			return result;
 		}
 
-		Matrix& operator*=(const T& operand) requires (R == C)
+		static Matrix Transpose(const Matrix& m)
 		{
-			*this = *this * operand;
-			return *this;
+			Matrix<T, C, R> tmp;
+
+			for (size_t c = 0; c < C; c++)
+			{
+				for (size_t r = 0; r < R; r++)
+					tmp[r][c] = m.data[c][r];
+			}
+
+			return *(reinterpret_cast<Matrix<T, R, C>*>(&tmp));
 		}
 
-		template <DoubleArrayType U>
-		Matrix& operator/=(const U& operand)
+		static Matrix<T, 4, 4> Perspective(T fovRadians, T aspect, T nearPlane, T farPlane)
 		{
-			return ApplyOperationInPlace(operand, std::divides<T>());
+			T tanHalfFov = std::tan(fovRadians / T(2));
+
+			return Matrix<T, 4, 4>(
+			{
+				{ 1 / (aspect * tanHalfFov), 0, 0, 0 },
+				{ 0, 1 / tanHalfFov, 0, 0 },
+				{ 0, 0, -(farPlane + nearPlane) / (farPlane - nearPlane), -1 },
+				{ 0, 0, -(2 * farPlane * nearPlane) / (farPlane - nearPlane), 0 }
+			});
 		}
 
-		Matrix& operator/=(std::initializer_list<std::initializer_list<T>> operand)
+		static Matrix<T, 4, 4> Orthographic(T left, T right, T bottom, T top, T nearPlane, T farPlane)
 		{
-			return ApplyOperationInPlace(operand, std::divides<T>());
+			return Matrix<T, 4, 4>(
+			{
+				{ 2 / (right - left), 0, 0, 0 },
+				{ 0, 2 / (top - bottom), 0, 0 },
+				{ 0, 0, -2 / (farPlane - nearPlane), 0 },
+				{ -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(farPlane + nearPlane) / (farPlane - nearPlane), 1 }
+			});
 		}
 
-		Matrix& operator/=(const Matrix& operand)
+		static Matrix<T, 4, 4> Translation(const Vector<T, 3>& translation)
 		{
-			return ApplyOperationInPlace(operand, std::divides<T>());
+			Matrix<T, 4, 4> result = Identity();
+
+			result.data[3][0] = translation.x();
+			result.data[3][1] = translation.y();
+			result.data[3][2] = translation.z();
+
+			return result;
 		}
 
-		std::array<T, C>& operator[](size_t row)
+		static Matrix<T, 4, 4> Scale(const Vector<T, 3>& scale)
 		{
-			assert(row < R);
-
-			return data[row];
+			return Matrix<T, 4, 4>(
+			{
+				{ scale.x(), 0,         0,         0 },
+				{ 0,         scale.y(), 0,         0 },
+				{ 0,         0,         scale.z(), 0 },
+				{ 0,         0,         0,         1 }
+			});
 		}
 
-		const std::array<T, C>& operator[](size_t row) const
+		static Matrix<T, 4, 4> RotationX(T angleRadians)
 		{
-			assert(row < R);
+			T c = std::cos(angleRadians);
+			T s = std::sin(angleRadians);
 
-			return data[row];
+			return Matrix<T, 4, 4>(
+			{
+				{ 1,  0, 0, 0 },
+				{ 0,  c, s, 0 },
+				{ 0, -s, c, 0 },
+				{ 0,  0, 0, 1 }
+			});
+		}
+
+		static Matrix<T, 4, 4> RotationY(T angleRadians)
+		{
+			T c = std::cos(angleRadians);
+			T s = std::sin(angleRadians);
+
+			return Matrix<T, 4, 4>(
+			{
+				{  c, 0, -s, 0 },
+				{  0, 1,  0, 0 },
+				{  s, 0,  c, 0 },
+				{  0, 0,  0, 1 }
+			});
+		}
+
+		static Matrix<T, 4, 4> RotationZ(T angleRadians)
+		{
+			T c = std::cos(angleRadians);
+			T s = std::sin(angleRadians);
+
+			return Matrix<T, 4, 4>(
+			{
+				{ c,  s, 0, 0 },
+				{ -s, c, 0, 0 },
+				{ 0,  0, 1, 0 },
+				{ 0,  0, 0, 1 }
+			});
+		}
+
+		static Matrix<T, 4, 4> LookAt(const Vector<T, 3>& eye, const Vector<T, 3>& center, const Vector<T, 3>& up)
+		{
+			auto fwd = Vector<T, 3>::Normalize(eye - center);
+			auto right = Vector<T, 3>::Normalize(Vector<T, 3>::Cross(up, fwd));
+			auto realUp = Vector<T, 3>::Cross(fwd, right);
+
+			return Matrix<T, 4, 4>(
+			{
+				{ right.x(),   realUp.x(),   fwd.x(),   T(0) },
+				{ right.y(),   realUp.y(),   fwd.y(),   T(0) },
+				{ right.z(),   realUp.z(),   fwd.z(),   T(0) },
+				{ -Vector<T,3>::Dot(right,eye), -Vector<T,3>::Dot(realUp,eye), -Vector<T,3>::Dot(fwd,eye), T(1) }
+			});
 		}
 
 		auto begin()
@@ -295,205 +373,22 @@ namespace Wasteland::Math
 			return C;
 		}
 
-		static Matrix Transpose(const Matrix& input)
-		{
-			Matrix result;
-
-			for (size_t i = 0; i < R; ++i)
-			{
-				for (size_t j = 0; j < C; ++j)
-					result[j][i] = input.data[i][j];
-			}
-
-			return result;
-		}
-
-		static Matrix Identity() requires (R == C)
-		{
-			Matrix result;
-
-			for (size_t i = 0; i < R; ++i)
-				result[i][i] = T(1);
-
-			return result;
-		}
-
-		static Matrix Normalize(const Matrix& m)
-		{
-			Matrix result;
-
-			for (size_t i = 0; i < R; ++i)
-			{
-				T length = std::sqrt(std::inner_product(m[i].begin(), m[i].end(), m[i].begin(), T(0)));
-
-				if (length > 0)
-				{
-					for (size_t j = 0; j < C; ++j)
-						result[i][j] = m[i][j] / length;
-				}
-			}
-
-			return result;
-		}
-
-		static Matrix LookAt(const Vector<T, 3>& eye, const Vector<T, 3>& target, const Vector<T, 3>& up) requires(R == 4 && C == 4)
-		{
-			Vector<T, 3> zAxis = Vector<T, 3>::Normalize({ target[0] - eye[0], target[1] - eye[1], target[2] - eye[2] });
-			Vector<T, 3> xAxis = CrossProduct(up, zAxis);
-			Vector<T, 3> yAxis = CrossProduct(zAxis, xAxis);
-
-			return Matrix(
-			{
-				{ xAxis[0], yAxis[0], zAxis[0], 0 },
-				{ xAxis[1], yAxis[1], zAxis[1], 0 },
-				{ xAxis[2], yAxis[2], zAxis[2], 0 },
-				{ -DotProduct(xAxis, eye), -DotProduct(yAxis, eye), -DotProduct(zAxis, eye), 1 }
-			});
-		}
-
-		static Matrix Perspective(T fovRadians, T aspect, T nearPlane, T farPlane) requires(R == 4 && C == 4)
-		{
-			T tanHalfFov = std::tan(fovRadians / 2);
-
-			return Matrix(
-			{
-				{ 1 / (aspect * tanHalfFov), 0, 0, 0 },
-				{ 0, 1 / tanHalfFov, 0, 0 },
-				{ 0, 0, farPlane / (farPlane - nearPlane), 1 },
-				{ 0, 0, (-nearPlane * farPlane) / (farPlane - nearPlane), 0 }
-			});
-		}
-
-		static Matrix Orthographic(T left, T right, T bottom, T top, T nearPlane, T farPlane) requires(R == 4 && C == 4)
-		{
-			return Matrix(
-			{
-				{ 2 / (right - left), 0, 0, 0 },
-				{ 0, 2 / (top - bottom), 0, 0 },
-				{ 0, 0, 1 / (farPlane - nearPlane), 0 },
-				{ -(right + left) / (right - left), -(top + bottom) / (top - bottom), -nearPlane / (farPlane - nearPlane), 1 }
-			});
-		}
-
-		static Matrix Scale(const Vector<T, 3>& scale) requires(R == 4 && C == 4)
-		{
-			return Matrix(
-			{
-				{ scale.x(), 0,  0,  0},
-				{ 0,  scale.y(), 0,  0},
-				{ 0,  0,  scale.z(), 0},
-				{ 0,  0,  0,  1 }
-			});
-		}
-
-		static Matrix Translation(const Vector<T, 3>& translation) requires(R == 4 && C == 4)
-		{
-			return Matrix(
-			{
-				{ 1, 0, 0, translation.x() },
-				{ 0, 1, 0, translation.y() },
-				{ 0, 0, 1, translation.z() },
-				{ 0, 0, 0, 1 }
-			});
-		}
-
-		static Matrix RotationX(T angle) requires(R == 4 && C == 4)
-		{
-			T cosA = std::cos(angle);
-			T sinA = std::sin(angle);
-
-			return Matrix(
-			{
-				{ 1,  0,    0,   0 },
-				{ 0, cosA, -sinA, 0 },
-				{ 0, sinA,  cosA, 0 },
-				{ 0,  0,    0,   1 }
-			});
-		}
-
-		static Matrix RotationY(T angle) requires(R == 4 && C == 4)
-		{
-			T cosA = std::cos(angle);
-			T sinA = std::sin(angle);
-
-			return Matrix(
-			{
-				{ cosA,  0, sinA, 0 },
-				{ 0,     1, 0,    0 },
-				{ -sinA, 0, cosA, 0 },
-				{ 0,     0, 0,    1 }
-			});
-		}
-
-		static Matrix RotationZ(T angle) requires(R == 4 && C == 4)
-		{
-			T cosA = std::cos(angle);
-			T sinA = std::sin(angle);
-
-			return Matrix(
-			{
-				{ cosA, -sinA, 0, 0 },
-				{ sinA, cosA,  0, 0 },
-				{ 0,    0,     1, 0 },
-				{ 0,    0,     0, 1 }
-			});
-		}
-
-		static Vector<T, 3> CrossProduct(const Vector<T, 3>& a, const Vector<T, 3>& b)
-		{
-			return
-			{
-				a[1] * b[2] - a[2] * b[1],
-				a[2] * b[0] - a[0] * b[2],
-				a[0] * b[1] - a[1] * b[0]
-			};
-		}
-
-		static T DotProduct(const Vector<T, 3>& a, const Vector<T, 3>& b)
-		{
-			return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-		}
-
 	private:
 
-		template <typename Op, typename U>
-		Matrix ApplyOperation(const U& operand, Op op) const
-		{
-			Matrix result;
+		std::array<std::array<T, R>, C> data;
 
-			for (size_t i = 0; i < R; ++i)
-			{
-				for (size_t j = 0; j < C; ++j)
-					result[i][j] = op(data[i][j], operand[i][j]);
-			}
-
-			return result;
-		}
-
-		template <typename Op, typename U>
-		Matrix& ApplyOperationInPlace(const U& operand, Op op)
-		{
-			for (size_t i = 0; i < R; ++i)
-			{
-				for (size_t j = 0; j < C; ++j)
-					data[i][j] = op(data[i][j], operand[i][j]);
-			}
-
-			return *this;
-		}
-
-		std::array<std::array<T, C>, R> data;
-
+		friend bool operator==(const Matrix<T, R, C>& lhs, const Matrix<T, R, C>& rhs);
+		friend bool operator!=(const Matrix<T, R, C>& lhs, const Matrix<T, R, C>& rhs);
 	};
 
 	template <Arithmetic T, size_t R, size_t C>
 	bool operator==(const Matrix<T, R, C>& lhs, const Matrix<T, R, C>& rhs)
 	{
-		for (size_t i = 0; i < R; ++i)
+		for (size_t col = 0; col < C; col++)
 		{
-			for (size_t j = 0; j < C; ++j)
+			for (size_t row = 0; row < R; row++)
 			{
-				if (lhs[i][j] != rhs[i][j])
+				if (lhs.data[col][row] != rhs.data[col][row])
 					return false;
 			}
 		}

@@ -92,6 +92,11 @@ namespace Wasteland::World
             }
 
             std::shared_ptr<Mesh> mesh = GetGameObject()->GetComponent<Mesh>().value();
+
+            mesh->SetVertices(vertices);
+            mesh->SetIndices(indices);
+
+            mesh->Generate();
         }
 
         static std::shared_ptr<Chunk> Create()

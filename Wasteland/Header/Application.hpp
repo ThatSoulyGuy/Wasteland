@@ -8,12 +8,14 @@
 #include "Render/Mesh.hpp"
 #include "Render/ShaderManager.hpp"
 #include "Render/TextureManager.hpp"
+#include "World/Chunk.hpp"
 
 using namespace Wasteland::Core;
 using namespace Wasteland::ECS;
 using namespace Wasteland::Entity;
 using namespace Wasteland::Entity::Entities;
 using namespace Wasteland::Render;
+using namespace Wasteland::World;
 
 namespace Wasteland
 {
@@ -38,17 +40,10 @@ namespace Wasteland
 			
 			meshObject->AddComponent(ShaderManager::GetInstance().Get("default").value());
 			meshObject->AddComponent(TextureManager::GetInstance().Get("debug").value());
-			meshObject->AddComponent(Mesh::Create(
-			{
-				{ { -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
-				{ {  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
-				{ {  0.0f,  0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.5f, 1.0f } }
-			},
-			{ 
-				0, 1, 2
-			}));
+			meshObject->AddComponent(Mesh::Create({ }, { }));
+			meshObject->AddComponent(Chunk::Create());
 
-			meshObject->GetComponent<Mesh>().value()->Generate();
+			meshObject->GetComponent<Chunk>().value()->Generate();
 
 			playerObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.player"));
 

@@ -18,7 +18,7 @@ namespace Wasteland::Render
 
 		Matrix<float, 4, 4> GetProjectionMatrix() const
 		{
-			return Matrix<float, 4, 4>::Perspective(fieldOfView * (std::numbers::pi / 180), (float)Window::GetInstance().GetDimensions().x() / Window::GetInstance().GetDimensions().y(), nearPlane, farPlane);
+			return Matrix<float, 4, 4>::Perspective(fieldOfView * (std::numbers::pi / 180), (float) Window::GetInstance().GetDimensions().x() / (float) Window::GetInstance().GetDimensions().y(), nearPlane, farPlane);
 		}
 
 		Matrix<float, 4, 4> GetViewMatrix() const
