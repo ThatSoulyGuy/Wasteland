@@ -92,7 +92,6 @@ if(APPLE)
 
   target_link_libraries(Wasteland PRIVATE
   glfw
-  GL
   "-framework Cocoa"
   "-framework QuartzCore"
   "-framework OpenGL"
