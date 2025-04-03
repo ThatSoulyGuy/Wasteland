@@ -8,7 +8,7 @@
 #include "Render/Mesh.hpp"
 #include "Render/ShaderManager.hpp"
 #include "Render/TextureManager.hpp"
-#include "World/Chunk.hpp"
+#include "World/WorldBase.hpp"
 
 using namespace Wasteland::Core;
 using namespace Wasteland::ECS;
@@ -32,18 +32,14 @@ namespace Wasteland
 
 			ShaderManager::GetInstance().Register(Shader::Create("default", { "Wasteland", "Shader/Default" }));
 			TextureManager::GetInstance().Register(Texture::Create("debug", { "Wasteland", "Texture/Debug.png" }));
+			TextureManager::GetInstance().Register(Texture::Create("grass", { "Wasteland", "Texture/Grass.png" }));
 		}
 
 		void Initialize()
 		{
-			meshObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.mesh"));
+			worldObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.world"));
 			
-			meshObject->AddComponent(ShaderManager::GetInstance().Get("default").value());
-			meshObject->AddComponent(TextureManager::GetInstance().Get("debug").value());
-			meshObject->AddComponent(Mesh::Create({ }, { }));
-			meshObject->AddComponent(Chunk::Create());
-
-			meshObject->GetComponent<Chunk>().value()->Generate();
+			worldObject->AddComponent(WorldBase::Create());
 
 			playerObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.player"));
 
@@ -52,6 +48,8 @@ namespace Wasteland
 
 		void Update()
 		{
+			worldObject->GetComponent<WorldBase>().value()->chunkLoaderPosition = playerObject->GetTransform()->GetWorldPosition();
+
 			GameObjectManager::GetInstance().Update();
 		}
 
@@ -89,7 +87,7 @@ namespace Wasteland
 	private:
 
 		std::shared_ptr<GameObject> playerObject;
-		std::shared_ptr<GameObject> meshObject;
+		std::shared_ptr<GameObject> worldObject;
 
 		static std::once_flag initalizationFlag;
 		static std::unique_ptr<Application> instance;

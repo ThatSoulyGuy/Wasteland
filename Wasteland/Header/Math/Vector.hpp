@@ -61,6 +61,44 @@ namespace Wasteland::Math
 			std::copy(input.begin(), input.end(), data.begin());
 		}
 
+		bool operator==(const Vector& operand) const
+		{
+			return data == operand.data;
+		}
+
+		bool operator!=(const Vector& operand) const
+		{
+			return !(*this == operand);
+		}
+
+		template <ArrayType U>
+		bool operator==(const U& operand) const
+		{
+			if (std::distance(operand.begin(), operand.end()) != N)
+				return false;
+				
+			return std::equal(data.begin(), data.end(), operand.begin());
+		}
+
+		template <ArrayType U>
+		bool operator!=(const U& operand) const
+		{
+			return !(*this == operand);
+		}
+
+		bool operator==(std::initializer_list<T> operand) const
+		{
+			if (operand.size() != N)
+				return false;
+
+			return std::equal(data.begin(), data.end(), operand.begin());
+		}
+
+		bool operator!=(std::initializer_list<T> operand) const
+		{
+			return !(*this == operand);
+		}
+
 		template <ArrayType U>
 		Vector& operator=(const U& operand)
 		{

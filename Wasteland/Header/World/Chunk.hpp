@@ -9,6 +9,7 @@ namespace Wasteland::World
 {
     class Chunk : public Component
     {
+
     public:
 
         Chunk(const Chunk&) = delete;
@@ -21,9 +22,12 @@ namespace Wasteland::World
             const int gridVertices = 33;
             const float totalSize = 32.0f;
             const float unitSize = totalSize / (gridVertices - 1);
-
             const float frequency = 0.1f;
-            const float amplitude = 16.0f;
+            const float amplitude = 3.0f;
+
+            Vector<float, 3> chunkOffset = GetGameObject()->GetTransform()->GetWorldPosition();
+
+            std::cout << chunkOffset << std::endl;
 
             vertices.clear();
             indices.clear();
@@ -36,29 +40,29 @@ namespace Wasteland::World
                     float x = i * unitSize;
                     float z = j * unitSize;
                     
-                    float noiseValue = SmoothNoise(x * frequency, z * frequency) * amplitude;
-                    float y = noiseValue;
-                    
+                    float y = FractalNoise(chunkOffset.x() + x, chunkOffset.z() + z, 4.0f, 0.5f, 0.1f) * amplitude;
+
                     Vertex vertex;
 
                     vertex.position = { x, y, z };
                     vertex.color = { 0.2f, 0.8f, 0.2f };
-                    vertex.uvs = { static_cast<float>(i) / (gridVertices - 1), static_cast<float>(j) / (gridVertices - 1) };
+                    vertex.uvs = Vector<float, 2>{ static_cast<float>(i) / (gridVertices - 1), static_cast<float>(j) / (gridVertices - 1) } * 8;
 
-                    float heightL = SmoothNoise((x - unitSize) * frequency, z * frequency) * amplitude;
-                    float heightR = SmoothNoise((x + unitSize) * frequency, z * frequency) * amplitude;
-                    float heightD = SmoothNoise(x * frequency, (z - unitSize) * frequency) * amplitude;
-                    float heightU = SmoothNoise(x * frequency, (z + unitSize) * frequency) * amplitude;
+                    float heightL = SmoothNoise(chunkOffset.x() + (x - unitSize) * frequency, chunkOffset.z() + z * frequency) * amplitude;
+                    float heightR = SmoothNoise(chunkOffset.x() + (x + unitSize) * frequency, chunkOffset.z() + z * frequency) * amplitude;
+                    float heightD = SmoothNoise(chunkOffset.x() + x * frequency, chunkOffset.z() + (z - unitSize) * frequency) * amplitude;
+                    float heightU = SmoothNoise(chunkOffset.x() + x * frequency, chunkOffset.z() + (z + unitSize) * frequency) * amplitude;
 
                     Vector<float, 3> normal;
-                    
+
                     normal.x() = heightL - heightR;
                     normal.y() = 2.0f;
                     normal.z() = heightD - heightU;
-                    
+
                     float length = std::sqrt(normal.x() * normal.x() +
                                             normal.y() * normal.y() +
                                             normal.z() * normal.z());
+
                     if (length != 0)
                     {
                         normal.x() /= length;
@@ -122,22 +126,48 @@ namespace Wasteland::World
             return 1.0f - static_cast<float>((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0f;
         }
 
+        static float Fade(float t)
+        {
+            return t * t * t * (t * (t * 6 - 15) + 10);
+        }
+
         static float SmoothNoise(float x, float z)
         {
             int xInt = static_cast<int>(std::floor(x));
             int zInt = static_cast<int>(std::floor(z));
+            
             float fracX = x - xInt;
             float fracZ = z - zInt;
+
+            float u = Fade(fracX);
+            float v = Fade(fracZ);
 
             float n00 = Noise(xInt, zInt);
             float n10 = Noise(xInt + 1, zInt);
             float n01 = Noise(xInt, zInt + 1);
             float n11 = Noise(xInt + 1, zInt + 1);
 
-            float i1 = Lerp(n00, n10, fracX);
-            float i2 = Lerp(n01, n11, fracX);
+            float i1 = Lerp(n00, n10, u);
+            float i2 = Lerp(n01, n11, u);
 
-            return Lerp(i1, i2, fracZ);
+            return Lerp(i1, i2, v);
+        }
+
+        float FractalNoise(float x, float z, int octaves, float persistence, float baseFrequency) 
+        {
+            float total = 0.0f;
+            float amplitude = 1.0f;
+            float freq = baseFrequency;
+
+            for (int i = 0; i < octaves; ++i)
+            {
+                total += SmoothNoise(x * freq, z * freq) * amplitude;
+
+                freq *= 2.0f;
+                amplitude *= persistence;
+            }
+
+            return total;
         }
 
         std::vector<Vertex> vertices;

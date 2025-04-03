@@ -79,7 +79,7 @@ namespace Wasteland::Render
 			int error = glGetError();
 
 			if (error != 0)
-				throw MAKE_EXCEPTION(GraphicalErrorException, std::string("OpenGL Error: '") + std::to_string(error) + "'!");
+				throw MAKE_EXCEPTION(GraphicalErrorException, std::format("OpenGL Error: '{}' in game object '{}'!", error, Super::GetGameObject()->GetName()));
 		}
 
 		void SetVertices(const std::vector<Vertex>& vertices)
