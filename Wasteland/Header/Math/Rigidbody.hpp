@@ -22,7 +22,7 @@ namespace Wasteland::Math
         {
             if (handle)
             {
-                PhysicsGlobal::CreateOrGetWorld()->removeRigidBody(handle);
+                PhysicsGlobal::GetInstance().GetWorld()->removeRigidBody(handle);
 
                 delete handle;
 
@@ -77,7 +77,7 @@ namespace Wasteland::Math
                 mask  = btBroadphaseProxy::AllFilter;
             }
 
-            PhysicsGlobal::CreateOrGetWorld()->addRigidBody(handle, group, mask);
+            PhysicsGlobal::GetInstance().GetWorld()->addRigidBody(handle, group, mask);
 
             Super::GetGameObject()->GetTransform()->AddOnPositionChangedCallback([&](Vector<float, 3> position)
             {

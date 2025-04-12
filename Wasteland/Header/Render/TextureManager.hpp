@@ -58,7 +58,7 @@ namespace Wasteland::Render
 
 		static TextureManager& GetInstance()
 		{
-			std::call_once(initalizationFlag, [&]()
+			std::call_once(initializationFlag, [&]()
 			{
 				instance = std::unique_ptr<TextureManager>(new TextureManager());
 			});
@@ -72,11 +72,11 @@ namespace Wasteland::Render
 
 		std::unordered_map<std::string, std::shared_ptr<Texture>> textureMap;
 
-		static std::once_flag initalizationFlag;
+		static std::once_flag initializationFlag;
 		static std::unique_ptr<TextureManager> instance;
 
 	};
 
-	std::once_flag TextureManager::initalizationFlag;
+	std::once_flag TextureManager::initializationFlag;
 	std::unique_ptr<TextureManager> TextureManager::instance;
 }

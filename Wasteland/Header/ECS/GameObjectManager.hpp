@@ -27,7 +27,7 @@ namespace Wasteland::ECS
 	{
 
 	public:
-		
+
 		GameObjectManager(const GameObjectManager&) = delete;
 		GameObjectManager(GameObjectManager&&) = delete;
 		GameObjectManager& operator=(const GameObjectManager&) = delete;
@@ -106,9 +106,16 @@ namespace Wasteland::ECS
 			std::for_each(gameObjectMap.begin(), gameObjectMap.end(), [&](const auto& pair) { pair.second->Render(camera.value()); });
 		}
 
+		void Uninitialize()
+		{
+			std::for_each(gameObjectMap.begin(), gameObjectMap.end(), [&](auto& pair) { pair.second.reset(); });
+
+			gameObjectMap.clear();
+		}
+
 		static GameObjectManager& GetInstance()
 		{
-			std::call_once(initalizationFlag, [&]()
+			std::call_once(initializationFlag, [&]()
 			{
 				instance = std::unique_ptr<GameObjectManager>(new GameObjectManager());
 			});
@@ -143,11 +150,11 @@ namespace Wasteland::ECS
 
 		std::vector<PendingAction> pendingActions;
 
-		static std::once_flag initalizationFlag;
+		static std::once_flag initializationFlag;
 		static std::unique_ptr<GameObjectManager> instance;
 
 	};
 
-	std::once_flag GameObjectManager::initalizationFlag;
+	std::once_flag GameObjectManager::initializationFlag;
 	std::unique_ptr<GameObjectManager> GameObjectManager::instance;
 }

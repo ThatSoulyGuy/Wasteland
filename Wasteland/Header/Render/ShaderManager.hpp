@@ -58,7 +58,7 @@ namespace Wasteland::Render
 
 		static ShaderManager& GetInstance()
 		{
-			std::call_once(initalizationFlag, [&]()
+			std::call_once(initializationFlag, [&]()
 			{
 				instance = std::unique_ptr<ShaderManager>(new ShaderManager());
 			});
@@ -72,11 +72,11 @@ namespace Wasteland::Render
 
 		std::unordered_map<std::string, std::shared_ptr<Shader>> shaderMap;
 
-		static std::once_flag initalizationFlag;
+		static std::once_flag initializationFlag;
 		static std::unique_ptr<ShaderManager> instance;
 
 	};
 
-	std::once_flag ShaderManager::initalizationFlag;
+	std::once_flag ShaderManager::initializationFlag;
 	std::unique_ptr<ShaderManager> ShaderManager::instance;
 }

@@ -42,7 +42,7 @@ namespace Wasteland::Utility
 
         static Time& GetInstance()
         {
-            std::call_once(initalizationFlag, [&]()
+            std::call_once(initializationFlag, [&]()
             {
                 instance = std::unique_ptr<Time>(new Time());
             });
@@ -58,11 +58,11 @@ namespace Wasteland::Utility
         std::chrono::high_resolution_clock::time_point lastFrameTime;
         float deltaTime = 0.0f;
 
-        static std::once_flag initalizationFlag;
+        static std::once_flag initializationFlag;
 		static std::unique_ptr<Time> instance;
 
 	};
 
-	std::once_flag Time::initalizationFlag;
+	std::once_flag Time::initializationFlag;
 	std::unique_ptr<Time> Time::instance;
 }

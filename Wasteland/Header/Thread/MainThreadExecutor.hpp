@@ -41,7 +41,7 @@ namespace Wasteland::Thread
 
         static MainThreadExecutor& GetInstance()
         {
-            std::call_once(initalizationFlag, [&]()
+            std::call_once(initializationFlag, [&]()
             {
                 instance = std::unique_ptr<MainThreadExecutor>(new MainThreadExecutor());
             });
@@ -56,11 +56,11 @@ namespace Wasteland::Thread
         std::mutex mutex;
         std::queue<std::function<void()>> tasks;
 
-        static std::once_flag initalizationFlag;
+        static std::once_flag initializationFlag;
         static std::unique_ptr<MainThreadExecutor> instance;
 
     };
 
-    std::once_flag MainThreadExecutor::initalizationFlag;
+    std::once_flag MainThreadExecutor::initializationFlag;
     std::unique_ptr<MainThreadExecutor> MainThreadExecutor::instance;
 }

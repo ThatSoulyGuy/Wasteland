@@ -42,24 +42,24 @@ namespace Wasteland
 		{
 			worldObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.world"));
 			
-			worldObject->AddComponent(WorldBase::Create());
+			worldObject.lock()->AddComponent(WorldBase::Create());
 
 			playerObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.player"));
 
-			playerObject->GetTransform()->SetLocalPosition({10.0f, 10.0f, 10.0f});
+			playerObject.lock()->GetTransform()->SetLocalPosition({10.0f, 10.0f, 10.0f});
 
-			playerObject->AddComponent(ColliderCapsule::Create(0.5f, 2.0f));
-			playerObject->AddComponent(Rigidbody<btCapsuleShape>::Create(10.0f));
-			playerObject->AddComponent(EntityBase::Create<EntityPlayer>());
+			playerObject.lock()->AddComponent(ColliderCapsule::Create(0.5f, 2.0f));
+			playerObject.lock()->AddComponent(Rigidbody<btCapsuleShape>::Create(10.0f));
+			playerObject.lock()->AddComponent(EntityBase::Create<EntityPlayer>());
 		}
 
 		void Update()
 		{
-			worldObject->GetComponent<WorldBase>().value()->chunkLoaderPosition = playerObject->GetTransform()->GetWorldPosition();
+			worldObject.lock()->GetComponent<WorldBase>().value()->chunkLoaderPosition = playerObject.lock()->GetTransform()->GetWorldPosition();
 
 			GameObjectManager::GetInstance().Update();
 
-			PhysicsGlobal::CreateOrGetWorld()->stepSimulation(Time::GetInstance().GetDeltaTime());
+			PhysicsGlobal::GetInstance().GetWorld()->stepSimulation(Time::GetInstance().GetDeltaTime());
 
 			Time::GetInstance().Update();
 		}
@@ -68,7 +68,7 @@ namespace Wasteland
 		{
 			Window::GetInstance().Clear();
 
-			GameObjectManager::GetInstance().Render(playerObject->GetComponent<EntityPlayer>().value()->GetCamera());
+			GameObjectManager::GetInstance().Render(playerObject.lock()->GetComponent<EntityPlayer>().value()->GetCamera());
 
 			MainThreadExecutor::GetInstance().Execute();
 
@@ -79,6 +79,10 @@ namespace Wasteland
 
 		void Uninitialize()
 		{
+			GameObjectManager::GetInstance().Uninitialize();
+
+			PhysicsGlobal::GetInstance().Uninitialize();
+
 			Window::GetInstance().Uninitialize();
 		}
 
@@ -89,7 +93,7 @@ namespace Wasteland
 
 		static Application& GetInstance()
 		{
-			std::call_once(initalizationFlag, [&]()
+			std::call_once(initializationFlag, [&]()
 			{
 				instance = std::unique_ptr<Application>(new Application());
 			});
@@ -99,14 +103,14 @@ namespace Wasteland
 
 	private:
 
-		std::shared_ptr<GameObject> playerObject;
-		std::shared_ptr<GameObject> worldObject;
+		std::weak_ptr<GameObject> playerObject;
+		std::weak_ptr<GameObject> worldObject;
 
-		static std::once_flag initalizationFlag;
+		static std::once_flag initializationFlag;
 		static std::unique_ptr<Application> instance;
 
 	};
 
-	std::once_flag Application::initalizationFlag;
+	std::once_flag Application::initializationFlag;
 	std::unique_ptr<Application> Application::instance;
 }
