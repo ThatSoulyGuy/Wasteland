@@ -62,7 +62,19 @@ namespace Wasteland::ECS
 		template <ComponentType T>
 		std::optional<std::shared_ptr<T>> GetComponent()
 		{
-			return componentMap.contains(typeid(T)) ? std::make_optional<std::shared_ptr<T>>(std::static_pointer_cast<T>(componentMap[typeid(T)])) : std::nullopt;
+			if (componentMap.contains(typeid(T)))
+			{
+				auto found = std::static_pointer_cast<T>(componentMap[typeid(T)]);
+				return std::make_optional(found);
+			}
+			
+			for (auto& [ti, comp] : componentMap)
+			{
+				if (auto casted = std::dynamic_pointer_cast<T>(comp))
+					return std::make_optional(casted);
+			}
+
+			return std::nullopt;
 		}
 
 		std::shared_ptr<Transform> GetTransform()

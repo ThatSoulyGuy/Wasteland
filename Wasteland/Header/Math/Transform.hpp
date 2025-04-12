@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <numbers>
+#include <functional>
 #include "ECS/Component.hpp"
 #include "Math/Matrix.hpp"
 #include "Math/Vector.hpp"
@@ -19,6 +20,9 @@ namespace Wasteland::Math
         void Translate(const Vector<float, 3>& translation)
         {
             localPosition += translation;
+
+            for (auto& function : onPositionUpdated)
+                function(localPosition);
         }
 
         void Rotate(const Vector<float, 3>& rotationDeg)
@@ -32,11 +36,17 @@ namespace Wasteland::Math
                 if (localRotation[i] < 0.0f)
                     localRotation[i] += 360.0f;
             }
+
+            for (auto& function : onRotationUpdated)
+                function(localRotation);
         }
 
         void Scale(const Vector<float, 3>& scale)
         {
             localScale += scale;
+
+            for (auto& function : onScaleUpdated)
+                function(localScale);
         }
 
         Vector<float, 3> GetLocalPosition() const
@@ -44,9 +54,15 @@ namespace Wasteland::Math
             return localPosition;
         }
 
-        void SetLocalPosition(const Vector<float, 3>& value)
+        void SetLocalPosition(const Vector<float, 3>& value, bool update = true)
         {
             localPosition = value;
+
+            if (!update)
+                return;
+
+            for (auto& function : onPositionUpdated)
+                function(localPosition);
         }
 
         Vector<float, 3> GetLocalRotation() const
@@ -54,7 +70,7 @@ namespace Wasteland::Math
             return localRotation;
         }
 
-        void SetLocalRotation(const Vector<float, 3>& value)
+        void SetLocalRotation(const Vector<float, 3>& value, bool update = true)
         {
             localRotation = value;
 
@@ -65,6 +81,12 @@ namespace Wasteland::Math
                 if (localRotation[i] < 0.0f)
                     localRotation[i] += 360.0f;
             }
+
+            if (!update)
+                return;
+
+            for (auto& function : onRotationUpdated)
+                function(localRotation);
         }
 
         Vector<float, 3> GetLocalScale() const
@@ -72,9 +94,15 @@ namespace Wasteland::Math
             return localScale;
         }
 
-        void SetLocalScale(const Vector<float, 3>& value)
+        void SetLocalScale(const Vector<float, 3>& value, bool update = true)
         {
             localScale = value;
+
+            if (!update)
+                return;
+
+            for (auto& function : onScaleUpdated)
+                function(localScale);
         }
 
         Vector<float, 3> GetWorldPosition() const
@@ -164,6 +192,21 @@ namespace Wasteland::Math
             return Vector<float, 3>{ pitch* rad2deg, yaw* rad2deg, roll* rad2deg };
         }
 
+        void AddOnPositionChangedCallback(const std::function<void(Vector<float, 3>)>& function)
+        {
+            onPositionUpdated.push_back(function);
+        }
+
+        void AddOnRotationChangedCallback(const std::function<void(Vector<float, 3>)>& function)
+        {
+            onRotationUpdated.push_back(function);
+        }
+
+        void AddOnScaleChangedCallback(const std::function<void(Vector<float, 3>)>& function)
+        {
+            onScaleUpdated.push_back(function);
+        }
+
         std::optional<std::weak_ptr<Transform>> GetParent() const
         {
             return parent;
@@ -214,6 +257,10 @@ namespace Wasteland::Math
         Transform() = default;
 
         std::optional<std::weak_ptr<Transform>> parent;
+
+        std::vector<std::function<void(Vector<float, 3>)>> onPositionUpdated;
+        std::vector<std::function<void(Vector<float, 3>)>> onRotationUpdated;
+        std::vector<std::function<void(Vector<float, 3>)>> onScaleUpdated;
 
         Vector<float, 3> localPosition = { 0.0f, 0.0f, 0.0f };
         Vector<float, 3> localRotation = { 0.0f, 0.0f, 0.0f };

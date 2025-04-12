@@ -1,13 +1,15 @@
 #pragma once
 
+#include <btBulletDynamicsCommon.h>
 #include "ECS/GameObject.hpp"
 #include "Render/Mesh.hpp"
+#include "Thread/MainThreadExecutor.hpp"
 
 using namespace Wasteland::Render;
 
 namespace Wasteland::World
 {
-    class Chunk : public Component
+    class Chunk final : public Component
     {
 
     public:
@@ -26,8 +28,6 @@ namespace Wasteland::World
             const float amplitude = 3.0f;
 
             Vector<float, 3> chunkOffset = GetGameObject()->GetTransform()->GetWorldPosition();
-
-            std::cout << chunkOffset << std::endl;
 
             vertices.clear();
             indices.clear();
@@ -95,12 +95,17 @@ namespace Wasteland::World
                 }
             }
 
-            std::shared_ptr<Mesh> mesh = GetGameObject()->GetComponent<Mesh>().value();
+            MainThreadExecutor::GetInstance().EnqueueTask([&]()
+            {
+                std::shared_ptr<Mesh> mesh = Super::GetGameObject()->GetComponent<Mesh>().value();
 
-            mesh->SetVertices(vertices);
-            mesh->SetIndices(indices);
+                mesh->SetVertices(vertices);
+                mesh->SetIndices(indices);
 
-            mesh->Generate();
+                mesh->Generate();
+            });
+
+            Super::GetGameObject()->AddComponent(ColliderMesh::Create(vertices, indices));
         }
 
         static std::shared_ptr<Chunk> Create()

@@ -436,10 +436,10 @@ namespace std
 		seed ^= value + magic + (seed << 6) + (seed >> 2);
 	}
 
-	template <Arithmetic T, size_t R, size_t C>
+	template <Wasteland::Math::Arithmetic T, size_t R, size_t C>
 	struct hash<Wasteland::Math::Matrix<T, R, C>>
 	{
-		std::size_t operator()(const Matrix<T, R, C>& m) const noexcept
+		std::size_t operator()(const Wasteland::Math::Matrix<T, R, C>& m) const noexcept
 		{
 			std::size_t result = 0;
 
@@ -457,7 +457,7 @@ namespace std
 	};
 }
 
-template <Arithmetic T, size_t R, size_t C>
+template <Wasteland::Math::Arithmetic T, size_t R, size_t C>
 struct std::formatter<Wasteland::Math::Matrix<T, R, C>> : std::formatter<std::string>
 {
 	auto format(const Wasteland::Math::Matrix<T, R, C>& mat, std::format_context& ctx)

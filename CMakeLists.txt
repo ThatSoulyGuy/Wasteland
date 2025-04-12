@@ -64,6 +64,7 @@ FetchContent_MakeAvailable(Cereal)
 
 target_link_libraries(Wasteland PRIVATE cereal)
 
+set(BUILD_BULLET3 ON CACHE BOOL "" FORCE)
 set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
 set(BUILD_BULLET3_DEMOS OFF CACHE BOOL "" FORCE) 
 set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
@@ -77,6 +78,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Bullet)
 
 target_link_libraries(Wasteland PRIVATE BulletDynamics BulletCollision LinearMath)
+
+target_include_directories(Wasteland PRIVATE "${CMAKE_BINARY_DIR}/_deps/bullet-src/src")
+
+message(STATUS "Bullet_SOURCE_DIR = ${Bullet_SOURCE_DIR}")
+message(STATUS "Bullet_BINARY_DIR = ${Bullet_BINARY_DIR}")
 
 set(SOURCE_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
 set(BUILD_ASSETS_DIR "${CMAKE_CURRENT_BINARY_DIR}/Assets")

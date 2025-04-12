@@ -3,10 +3,12 @@
 #include "Core/InputManager.hpp"
 #include "ECS/GameObject.hpp"
 #include "Entity/EntityBase.hpp"
+#include "Math/Rigidbody.hpp"
 #include "Render/Camera.hpp"
 
 using namespace Wasteland::Core;
 using namespace Wasteland::Entity;
+using namespace Wasteland::Math;
 using namespace Wasteland::Render;
 
 namespace Wasteland::Entity::Entities
@@ -27,7 +29,7 @@ namespace Wasteland::Entity::Entities
 				.Set(EntityBase::RegistryNameSetter{ "entity_player" })
 				.Set(EntityBase::CurrentHealthSetter{ 100.0f })
 				.Set(EntityBase::MaximumHealthSetter{ 100.0f })
-				.Set(EntityBase::MovementSpeedSetter{ 0.04f })
+				.Set(EntityBase::MovementSpeedSetter{ 100.04f })
 				.Set(EntityBase::RunningAcceleratorSetter{ 1.0f })
 				.Set(EntityBase::JumpHeightSetter{ 5.0f })
 				.Set(EntityBase::CanJumpSetter{ true })
@@ -96,7 +98,7 @@ namespace Wasteland::Entity::Entities
 			if (InputManager::GetInstance().GetKeyState(KeyCode::D, KeyState::HELD))
 				movement -= right * MovementSpeed;
 
-			GetGameObject()->GetTransform()->Translate(movement);
+			Super::GetGameObject()->template GetComponent<Rigidbody<btCapsuleShape>>().value()->ApplyCentralForce({ movement.x(), movement.y(), movement.z() });
 		}
 
 		std::shared_ptr<Camera> camera;

@@ -1,11 +1,14 @@
 #pragma once
 
+#include "Collider/Colliders/ColliderMesh.hpp"
 #include "ECS/GameObjectManager.hpp"
+#include "Math/Rigidbody.hpp"
 #include "Render/ShaderManager.hpp"
 #include "Render/TextureManager.hpp"
 #include "Utility/CoordinateHelper.hpp"
 #include "World/Chunk.hpp"
 
+using namespace Wasteland::Collider::Colliders;
 using namespace Wasteland::ECS;
 using namespace Wasteland::Render;
 using namespace Wasteland::Utility;
@@ -34,6 +37,10 @@ namespace Wasteland::World
 			chunkObject->AddComponent(Chunk::Create());
 
 			chunkObject->GetComponent<Chunk>().value()->Generate();
+            
+            chunkObject->AddComponent(Rigidbody<btBvhTriangleMeshShape>::Create(0.0f, true));
+            
+            chunkObject->GetTransform()->SetLocalPosition(CoordinateHelper::ChunkToWorldCoordinates(position));
 
             chunkMap.insert({ position, chunkObject->GetComponent<Chunk>().value() });
         }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include "ECS/GameObject.hpp"
 #include "Math/Transform.hpp"
@@ -28,6 +29,11 @@ namespace Wasteland::Render
 
 		void Generate()
 		{
+			isInitialized = false;
+
+			if (vertices.size() <= 0 || indices.size() <= 0)
+				throw MAKE_EXCEPTION(IllegalStateException, "Vertices and/or indices was 0 for mesh '" + Super::GetGameObject()->GetName() + "'!");
+
 			glGenVertexArrays(1, &VAO);
 			glGenBuffers(1, &VBO);
 			glGenBuffers(1, &EBO);
@@ -53,10 +59,15 @@ namespace Wasteland::Render
 			glEnableVertexAttribArray(3);
 
 			glBindVertexArray(0);
+
+			isInitialized = true;
 		}
 
 		void Render(std::shared_ptr<Camera> camera) override
 		{
+			if (!isInitialized)
+				return;
+
 			auto shader = Super::GetGameObject()->GetComponent<Shader>().value();
 			auto texture = Super::GetGameObject()->GetComponent<Texture>().value();
 
@@ -110,6 +121,8 @@ namespace Wasteland::Render
 		std::vector<unsigned int> indices;
 
 		unsigned int VAO, VBO, EBO;
+
+		std::atomic<bool> isInitialized = false;
 
 	};
 }

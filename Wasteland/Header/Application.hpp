@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Collider/Colliders/ColliderCapsule.hpp"
 #include "Core/InputManager.hpp"
 #include "Core/Window.hpp"
 #include "ECS/GameObjectManager.hpp"
@@ -8,6 +9,7 @@
 #include "Render/Mesh.hpp"
 #include "Render/ShaderManager.hpp"
 #include "Render/TextureManager.hpp"
+#include "Utility/Time.hpp"
 #include "World/WorldBase.hpp"
 
 using namespace Wasteland::Core;
@@ -15,6 +17,7 @@ using namespace Wasteland::ECS;
 using namespace Wasteland::Entity;
 using namespace Wasteland::Entity::Entities;
 using namespace Wasteland::Render;
+using namespace Wasteland::Utility;
 using namespace Wasteland::World;
 
 namespace Wasteland
@@ -26,7 +29,7 @@ namespace Wasteland
 
 		void PreInitialize()
 		{
-			Window::GetInstance().Initialize("Wasteland* 1.11.9", { 750, 450 });
+			Window::GetInstance().Initialize("Wasteland* 9.2.3-alpha", { 750, 450 });
 
 			InputManager::GetInstance().Initialize();
 
@@ -43,6 +46,10 @@ namespace Wasteland
 
 			playerObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.player"));
 
+			playerObject->GetTransform()->SetLocalPosition({10.0f, 10.0f, 10.0f});
+
+			playerObject->AddComponent(ColliderCapsule::Create(0.5f, 2.0f));
+			playerObject->AddComponent(Rigidbody<btCapsuleShape>::Create(10.0f));
 			playerObject->AddComponent(EntityBase::Create<EntityPlayer>());
 		}
 
@@ -51,6 +58,10 @@ namespace Wasteland
 			worldObject->GetComponent<WorldBase>().value()->chunkLoaderPosition = playerObject->GetTransform()->GetWorldPosition();
 
 			GameObjectManager::GetInstance().Update();
+
+			PhysicsGlobal::CreateOrGetWorld()->stepSimulation(Time::GetInstance().GetDeltaTime());
+
+			Time::GetInstance().Update();
 		}
 
 		void Render()
@@ -58,6 +69,8 @@ namespace Wasteland
 			Window::GetInstance().Clear();
 
 			GameObjectManager::GetInstance().Render(playerObject->GetComponent<EntityPlayer>().value()->GetCamera());
+
+			MainThreadExecutor::GetInstance().Execute();
 
 			InputManager::GetInstance().Update();
 
