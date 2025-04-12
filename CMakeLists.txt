@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.30)
+﻿cmake_minimum_required (VERSION 4.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -110,8 +110,6 @@ if(APPLE)
   )
 
   target_compile_options(Wasteland PRIVATE
-    -Wall
-    -Wextra
     -Wno-deprecated-declarations
     -mmacosx-version-min=13.7.4
   )
