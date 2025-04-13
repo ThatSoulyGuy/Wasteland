@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Core/Window.hpp"
+#include "Thread/MainThreadExecutor.hpp"
+
+using namespace Wasteland::Thread;
 
 namespace Wasteland::Core
 {

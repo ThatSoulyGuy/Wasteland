@@ -52,7 +52,12 @@ namespace Wasteland::Entity::Entities
 		void Update() override
 		{
 			if (InputManager::GetInstance().GetKeyState(KeyCode::ESCAPE, KeyState::PRESSED))
-				InputManager::GetInstance().SetMouseMode(!InputManager::GetInstance().GetMouseMode());
+			{
+				MainThreadExecutor::GetInstance().EnqueueTask(this, [&]()
+				{
+					InputManager::GetInstance().SetMouseMode(!InputManager::GetInstance().GetMouseMode());
+				});
+			}
 
 			UpdateMouselook();
 			UpdateMovement();

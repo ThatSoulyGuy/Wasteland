@@ -105,6 +105,26 @@ namespace Wasteland::Math
             }
         }
 
+        void SetRotationConstraints(const std::initializer_list<bool>& list)
+        {
+            assert(list.size() == 3);
+
+            std::vector<bool> listVector(list.begin(), list.end());
+
+            if (handle)
+                handle->setAngularFactor({ listVector[0], listVector[1], listVector[2] });
+        }
+
+        std::array<bool, 3> GetRotationConstraints() const
+        {
+            if (!handle)
+                return;
+
+            btVector3 angularFactor = handle->getAngularFactor();
+
+            return { (int)angularFactor.x(), (int)angularFactor.y(), (int)angularFactor.z() };
+        }
+
         void SetLinearVelocity(const btVector3& vel)
         {
             if (handle && !isStatic)

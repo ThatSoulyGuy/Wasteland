@@ -1,27 +1,25 @@
 #pragma once
 
 #include <future>
+#include <shared_mutex>
 #include "ECS/GameObject.hpp"
-#include "Thread/ThreadPool.hpp"
-
-using namespace Wasteland::Thread;
 
 namespace Wasteland::ECS
 {
-	enum class ActionType
-	{
-		Register,
-		Unregister
-	};
-	
-	struct PendingAction
-	{
-		ActionType type;
+    enum class ActionType
+    {
+        REGISTER,
+        UNREGISTER
+    };
 
-		std::string name;
+    struct PendingAction
+    {
+        ActionType type;
 
-		std::shared_ptr<GameObject> object;
-	};
+        std::string name;
+
+        std::shared_ptr<GameObject> object;
+    };
 
 	class GameObjectManager
 	{
@@ -33,125 +31,85 @@ namespace Wasteland::ECS
 		GameObjectManager& operator=(const GameObjectManager&) = delete;
 		GameObjectManager& operator=(GameObjectManager&&) = delete;
 
-		std::shared_ptr<GameObject> Register(std::shared_ptr<GameObject> gameObject)
-		{
-			std::unique_lock<std::mutex> lock(mutex);
+        std::shared_ptr<GameObject> Register(std::shared_ptr<GameObject> gameObject)
+        {
+            PendingAction action;
 
-			PendingAction action;
+            action.type = ActionType::REGISTER;
+            action.name = gameObject->GetName();
+            action.object = gameObject;
 
-			action.type = ActionType::Register;
-			action.name = gameObject->GetName();
-			action.object = gameObject;
+            pendingActions.push_back(std::move(action));
 
-			pendingActions.push_back(std::move(action));
+            return gameObject;
+        }
 
-			return gameObject;
-		}
+        void Unregister(const std::string& name)
+        {
+            PendingAction action;
 
-		void Unregister(const std::string& name)
-		{
-			std::unique_lock<std::mutex> lock(mutex);
+            action.type = ActionType::UNREGISTER;
+            action.name = name;
+            
+            pendingActions.push_back(std::move(action));
+        }
 
-			PendingAction action;
+        void Update()
+        {
+            for (auto& [name, obj] : gameObjectMap)
+                obj->Update();
+            
+            ApplyPendingActions();
+        }
 
-			action.type = ActionType::Unregister;
-			action.name = name;
+        void Render(std::optional<std::shared_ptr<Wasteland::Render::Camera>> camera)
+        {
+            if (!camera.has_value())
+                return;
 
-			pendingActions.push_back(std::move(action));
-		}
+            std::for_each(gameObjectMap.begin(), gameObjectMap.end(), [&](const auto& pair) { pair.second->Render(camera.value()); });
+        }
 
-		void Update()
-		{
-			std::vector<std::shared_ptr<std::promise<void>>> promises;
+        void Uninitialize()
+        {
+            std::for_each(gameObjectMap.begin(), gameObjectMap.end(), [&](auto& pair) { pair.second.reset(); });
 
-			{
-				std::unique_lock<std::mutex> lock(mutex);
+            gameObjectMap.clear();
+        }
 
-				promises.reserve(gameObjectMap.size());
+        static GameObjectManager& GetInstance()
+        {
+            std::call_once(initializationFlag, [&]()
+            {
+                instance = std::unique_ptr<GameObjectManager>(new GameObjectManager());
+            });
 
-				for (auto& [name, gameObject] : gameObjectMap)
-				{
-					auto pm = std::make_shared<std::promise<void>>();
-					promises.push_back(pm);
+            return *instance;
+        }
 
-					pool.EnqueueTask([gameObject, pm]() 
-					{
-						try
-						{
-							gameObject->Update();
-						}
-						catch (...)
-						{
-							
-						}
+    private:
 
-						pm->set_value();
-					});
-				}
-			}
+        GameObjectManager() = default;
 
-			for (auto& pm : promises)
-				pm->get_future().wait();
-				
-			ApplyPendingActions();
-		}
+        void ApplyPendingActions()
+        {
+            for (auto& action : pendingActions)
+            {
+                if (action.type == ActionType::REGISTER)
+                    gameObjectMap.insert({ action.name, action.object });
+                else if (action.type == ActionType::UNREGISTER)
+                    gameObjectMap.erase(action.name);
+            }
 
-		void Render(std::optional<std::shared_ptr<Wasteland::Render::Camera>> camera)
-		{
-			if (!camera.has_value())
-				return;
+            pendingActions.clear();
+        }
 
-			std::unique_lock<std::mutex> lock(mutex);
+        std::unordered_map<std::string, std::shared_ptr<GameObject>> gameObjectMap;
 
-			std::for_each(gameObjectMap.begin(), gameObjectMap.end(), [&](const auto& pair) { pair.second->Render(camera.value()); });
-		}
+        std::vector<PendingAction> pendingActions;
 
-		void Uninitialize()
-		{
-			std::for_each(gameObjectMap.begin(), gameObjectMap.end(), [&](auto& pair) { pair.second.reset(); });
-
-			gameObjectMap.clear();
-		}
-
-		static GameObjectManager& GetInstance()
-		{
-			std::call_once(initializationFlag, [&]()
-			{
-				instance = std::unique_ptr<GameObjectManager>(new GameObjectManager());
-			});
-
-			return *instance;
-		}
-
-	private:
-
-		GameObjectManager() = default;
-
-		void ApplyPendingActions()
-		{
-			std::unique_lock<std::mutex> lock(mutex);
-
-			for (auto& action : pendingActions)
-			{
-				if (action.type == ActionType::Register)
-					gameObjectMap.insert({ action.name, action.object });
-				else if (action.type == ActionType::Unregister)
-					gameObjectMap.erase(action.name);
-			}
-
-			pendingActions.clear();
-		}
-
-		std::mutex mutex;
-
-		std::unordered_map<std::string, std::shared_ptr<GameObject>> gameObjectMap;
-
-		ThreadPool<3> pool = ThreadPool<3>();
-
-		std::vector<PendingAction> pendingActions;
-
-		static std::once_flag initializationFlag;
-		static std::unique_ptr<GameObjectManager> instance;
+        static std::once_flag initializationFlag;
+        static std::unique_ptr<GameObjectManager> instance;
 
 	};
 

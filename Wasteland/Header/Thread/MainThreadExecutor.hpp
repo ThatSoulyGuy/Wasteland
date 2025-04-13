@@ -15,17 +15,38 @@ namespace Wasteland::Thread
         MainThreadExecutor& operator=(const MainThreadExecutor&) = delete;
         MainThreadExecutor& operator=(MainThreadExecutor&&) = delete;
 
-        void EnqueueTask(std::function<void()> task)
+        void EnqueueTask(void* holder, std::function<void()> task)
         {
             std::lock_guard<std::mutex> lock(mutex);
-            tasks.push(std::move(task));
+            tasks.push(std::make_tuple(holder, std::move(task)));
+        }
+
+        void CancelTask(void* holder)
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+
+            std::queue<std::tuple<void*, std::function<void()>>> newQueue;
+
+            while (!tasks.empty())
+            {
+                auto& front = tasks.front();
+
+                if (std::get<0>(front) != holder)
+                    newQueue.push(std::move(front));
+
+                tasks.pop();
+            }
+
+            tasks.swap(newQueue);
         }
 
         void Execute()
         {
-            std::queue<std::function<void()>> localQueue;
+            std::queue<std::tuple<void*, std::function<void()>>> localQueue;
+
             {
                 std::lock_guard<std::mutex> lock(mutex);
+
                 localQueue.swap(tasks);
             }
 
@@ -33,7 +54,8 @@ namespace Wasteland::Thread
             {
                 auto& fn = localQueue.front();
 
-                fn();
+                if (std::get<0>(fn))
+                    std::get<1>(fn)();
 
                 localQueue.pop();
             }
@@ -54,7 +76,7 @@ namespace Wasteland::Thread
         MainThreadExecutor() = default;
 
         std::mutex mutex;
-        std::queue<std::function<void()>> tasks;
+        std::queue<std::tuple<void*, std::function<void()>>> tasks;
 
         static std::once_flag initializationFlag;
         static std::unique_ptr<MainThreadExecutor> instance;

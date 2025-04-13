@@ -46,11 +46,13 @@ namespace Wasteland
 
 			playerObject = GameObjectManager::GetInstance().Register(GameObject::Create("default.player"));
 
-			playerObject.lock()->GetTransform()->SetLocalPosition({10.0f, 10.0f, 10.0f});
-
 			playerObject.lock()->AddComponent(ColliderCapsule::Create(0.5f, 2.0f));
 			playerObject.lock()->AddComponent(Rigidbody<btCapsuleShape>::Create(10.0f));
 			playerObject.lock()->AddComponent(EntityBase::Create<EntityPlayer>());
+
+			playerObject.lock()->GetComponent<Rigidbody<btCapsuleShape>>().value()->SetRotationConstraints({ false, false, false });
+			
+			playerObject.lock()->GetTransform()->SetLocalPosition({ 10.0f, 20.0f, 10.0f });
 		}
 
 		void Update()

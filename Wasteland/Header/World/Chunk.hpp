@@ -9,7 +9,7 @@ using namespace Wasteland::Render;
 
 namespace Wasteland::World
 {
-    class Chunk final : public Component
+    class Chunk final : public Component, public std::enable_shared_from_this<Chunk>
     {
 
     public:
@@ -21,17 +21,20 @@ namespace Wasteland::World
 
         void Generate()
         {
-            const int gridVertices = 33;
+            const int gridVertices = resolution;
             const float totalSize = 32.0f;
             const float unitSize = totalSize / (gridVertices - 1);
-            const float frequency = 0.1f;
-            const float amplitude = 3.0f;
+
+            const float baseAmplitude = 1.5f;
+
+            const float baseFrequency = 0.1f;
 
             Vector<float, 3> chunkOffset = GetGameObject()->GetTransform()->GetWorldPosition();
 
             vertices.clear();
             indices.clear();
-            vertices.reserve(gridVertices * gridVertices);
+
+            vertices.reserve(static_cast<size_t>(gridVertices) * gridVertices);
 
             for (int j = 0; j < gridVertices; ++j)
             {
@@ -39,31 +42,44 @@ namespace Wasteland::World
                 {
                     float x = i * unitSize;
                     float z = j * unitSize;
-                    
-                    float y = FractalNoise(chunkOffset.x() + x, chunkOffset.z() + z, 4.0f, 0.5f, 0.1f) * amplitude;
 
-                    Vertex vertex;
+                    float regionFreq = 0.02f;
+                    float regionNoise = SmoothNoise((chunkOffset.x() + x) * regionFreq, (chunkOffset.z() + z) * regionFreq);
+
+                    float regionFactor = 0.5f + regionNoise * 1.5f;
+
+                    float y = FractalNoise(chunkOffset.x() + x, chunkOffset.z() + z, 4.0f, 0.5f, baseFrequency) * baseAmplitude * regionFactor;
+
+                    Vertex vertex{ };
 
                     vertex.position = { x, y, z };
                     vertex.color = { 0.2f, 0.8f, 0.2f };
-                    vertex.uvs = Vector<float, 2>{ static_cast<float>(i) / (gridVertices - 1), static_cast<float>(j) / (gridVertices - 1) } * 8;
 
-                    float heightL = SmoothNoise(chunkOffset.x() + (x - unitSize) * frequency, chunkOffset.z() + z * frequency) * amplitude;
-                    float heightR = SmoothNoise(chunkOffset.x() + (x + unitSize) * frequency, chunkOffset.z() + z * frequency) * amplitude;
-                    float heightD = SmoothNoise(chunkOffset.x() + x * frequency, chunkOffset.z() + (z - unitSize) * frequency) * amplitude;
-                    float heightU = SmoothNoise(chunkOffset.x() + x * frequency, chunkOffset.z() + (z + unitSize) * frequency) * amplitude;
+                    vertex.uvs = Vector<float, 2>
+                    {
+                        static_cast<float>(i) / (gridVertices - 1),
+                        static_cast<float>(j) / (gridVertices - 1)
+                    } * 8.0f;
+
+                    float freq = 0.1f;
+
+                    float heightL = SmoothNoise(chunkOffset.x() + (x - unitSize) * freq,
+                        chunkOffset.z() + z * freq) * baseAmplitude;
+                    float heightR = SmoothNoise(chunkOffset.x() + (x + unitSize) * freq,
+                        chunkOffset.z() + z * freq) * baseAmplitude;
+                    float heightD = SmoothNoise(chunkOffset.x() + x * freq,
+                        chunkOffset.z() + (z - unitSize) * freq) * baseAmplitude;
+                    float heightU = SmoothNoise(chunkOffset.x() + x * freq,
+                        chunkOffset.z() + (z + unitSize) * freq) * baseAmplitude;
 
                     Vector<float, 3> normal;
-
                     normal.x() = heightL - heightR;
                     normal.y() = 2.0f;
                     normal.z() = heightD - heightU;
 
-                    float length = std::sqrt(normal.x() * normal.x() +
-                                            normal.y() * normal.y() +
-                                            normal.z() * normal.z());
+                    float length = std::sqrt(normal.x() * normal.x() + normal.y() * normal.y() + normal.z() * normal.z());
 
-                    if (length != 0)
+                    if (length != 0.0f)
                     {
                         normal.x() /= length;
                         normal.y() /= length;
@@ -95,13 +111,19 @@ namespace Wasteland::World
                 }
             }
 
-            MainThreadExecutor::GetInstance().EnqueueTask([&]()
+            auto selfWeak = std::weak_ptr<Chunk>(shared_from_this());
+
+            MainThreadExecutor::GetInstance().EnqueueTask(this, [weakSelf = std::move(selfWeak)]()
             {
-                std::shared_ptr<Mesh> mesh = Super::GetGameObject()->GetComponent<Mesh>().value();
+                auto self = weakSelf.lock();
 
-                mesh->SetVertices(vertices);
-                mesh->SetIndices(indices);
+                if (!self)
+                    return;
+                    
+                auto mesh = self->GetGameObject()->GetComponent<Mesh>().value();
 
+                mesh->SetVertices(self->vertices);
+                mesh->SetIndices(self->indices);
                 mesh->Generate();
             });
 
@@ -174,6 +196,8 @@ namespace Wasteland::World
 
             return total;
         }
+
+        int resolution = 33;
 
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
